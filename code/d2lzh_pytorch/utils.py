@@ -120,8 +120,13 @@ def train_ch3(net, train_iter, test_iter, loss, num_epochs, batch_size,
               params=None, lr=None, optimizer=None):
     for epoch in range(num_epochs):
         train_l_sum, train_acc_sum, n = 0.0, 0.0, 0
+
         for X, y in train_iter:
             y_hat = net(X)
+            # print('y_hat.shape', y_hat.shape)
+            # torch.Size([256, 10])
+            # print('y.shape', y.shape)
+            # torch.Size([256])
             l = loss(y_hat, y).sum()
             
             # 梯度清零
@@ -130,17 +135,25 @@ def train_ch3(net, train_iter, test_iter, loss, num_epochs, batch_size,
             elif params is not None and params[0].grad is not None:
                 for param in params:
                     param.grad.data.zero_()
-            
+
+            # 反向传播计算梯度
             l.backward()
+
             if optimizer is None:
                 sgd(params, lr, batch_size)
             else:
-                optimizer.step()  # “softmax回归的简洁实现”一节将用到
+                # 正向传播更新梯度
+                optimizer.step()
             
             
             train_l_sum += l.item()
+            # 隐藏层 num_hiddens 最大概率 组成的矩阵 与 y 比较求和例如:
+            # y_hat = [[0.5, 0.2, 0.3], [0.1, 0.2, 0.7]]
+            # y = [0, 2]
+            # y_hat.argmax(dim=1) == y 等于 [true, true].sum().item() 等于 2
             train_acc_sum += (y_hat.argmax(dim=1) == y).sum().item()
-            n += y.shape[0]
+            # num_hiddens
+            n += y.shape[0] 
         test_acc = evaluate_accuracy(test_iter, net)
         print('epoch %d, loss %.4f, train acc %.3f, test acc %.3f'
               % (epoch + 1, train_l_sum / n, train_acc_sum / n, test_acc))
@@ -151,7 +164,8 @@ def train_ch3(net, train_iter, test_iter, loss, num_epochs, batch_size,
 # ########################### 3.7 #####################################3
 class FlattenLayer(torch.nn.Module):
     def __init__(self):
-        super(FlattenLayer, self).__init__()
+        super().__init__()
+
     def forward(self, x): # x shape: (batch, *, *, ...)
         return x.view(x.shape[0], -1)
 
@@ -208,7 +222,7 @@ def corr2d(X, K):
 # ############################ 5.5 #########################
 def evaluate_accuracy(data_iter, net, device=None):
     if device is None and isinstance(net, torch.nn.Module):
-        # 如果没指定device就使用net的device
+        # 如果没指定 device 就使用 net 的 device
         device = list(net.parameters())[0].device 
     acc_sum, n = 0.0, 0
     with torch.no_grad():
@@ -217,9 +231,9 @@ def evaluate_accuracy(data_iter, net, device=None):
                 net.eval() # 评估模式, 这会关闭dropout
                 acc_sum += (net(X.to(device)).argmax(dim=1) == y.to(device)).float().sum().cpu().item()
                 net.train() # 改回训练模式
-            else: # 自定义的模型, 3.13节之后不会用到, 不考虑GPU
-                if('is_training' in net.__code__.co_varnames): # 如果有is_training这个参数
-                    # 将is_training设置成False
+            else: # 自定义的模型, 3.13 节之后不会用到, 不考虑GPU
+                if('is_training' in net.__code__.co_varnames): # 如果有 is_training 这个参数
+                    # 将 is_training 设置成False
                     acc_sum += (net(X, is_training=False).argmax(dim=1) == y).float().sum().item() 
                 else:
                     acc_sum += (net(X).argmax(dim=1) == y).float().sum().item() 
@@ -261,6 +275,9 @@ def load_data_fashion_mnist(batch_size, resize=None, root='~/Datasets/FashionMNI
     transform = torchvision.transforms.Compose(trans)
     mnist_train = torchvision.datasets.FashionMNIST(root=root, train=True, download=True, transform=transform)
     mnist_test = torchvision.datasets.FashionMNIST(root=root, train=False, download=True, transform=transform)
+    print('len(mnist_train)', len(mnist_train))
+    print('len(mnist_test)', len(mnist_test))
+
     if sys.platform.startswith('win'):
         num_workers = 0  # 0表示不用额外的进程来加速读取数据
     else:
