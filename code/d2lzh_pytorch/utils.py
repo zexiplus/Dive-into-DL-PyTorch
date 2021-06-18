@@ -228,7 +228,7 @@ def evaluate_accuracy(data_iter, net, device=None):
     with torch.no_grad():
         for X, y in data_iter:
             if isinstance(net, torch.nn.Module):
-                net.eval() # 评估模式, 这会关闭dropout
+                net.eval() # 打开评估模式, 防止更新权重
                 acc_sum += (net(X.to(device)).argmax(dim=1) == y.to(device)).float().sum().cpu().item()
                 net.train() # 改回训练模式
             else: # 自定义的模型, 3.13 节之后不会用到, 不考虑GPU
