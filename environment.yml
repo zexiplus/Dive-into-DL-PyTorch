@@ -14,3 +14,4 @@ dependencies:
   - opencv-python===4.5.2.52
   - Pillow==8.2.0
   - Flask==2.0.1
+  - tensorboard===2.5.0

@@ -1,0 +1,4 @@
+name: python-2.7
+dependencies:
+- python=2.7.16
+- pip=19.3
