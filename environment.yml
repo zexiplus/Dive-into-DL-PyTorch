@@ -15,3 +15,4 @@ dependencies:
   - Pillow==8.2.0
   - Flask==2.0.1
   - tensorboard===2.5.0
+  - tensorboardX===2.2
